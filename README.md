@@ -2,8 +2,6 @@
 
 Backend services for the URL Shortener system, built as a Serverless (AWS Lambda) Node.js/TypeScript project using the Lesgo framework.
 
-**Warning:** This repository must remain private. It includes `.env` files with sensitive server and security configuration.
-
 ## Prerequisites
 
 - Node.js version from `.nvmrc` (recommended via `nvm`)
@@ -93,3 +91,7 @@ When configuring your environment, be mindful of the CIDR and subnet values assi
 - **Future Growth**: Choose CIDR block sizes that allow for sufficient IP addresses as your infrastructure scales.
 
 You should document your assigned ranges locally or in your organization's network architecture documentation to maintain a clear overview of your network landscape.
+
+---
+**Author:** TheCompSTUDGuy  
+**Email:** the.compstud.guy@universitea.shop
