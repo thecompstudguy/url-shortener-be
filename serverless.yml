@@ -107,6 +107,7 @@ custom:
 #
 functions:
   - ${file(${self:custom.path.functions}/utils.yml)}
+  - ${file(${self:custom.path.functions}/app.yml)}
 
 #
 # Add resources here

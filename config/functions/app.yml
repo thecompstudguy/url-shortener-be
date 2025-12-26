@@ -1,0 +1,9 @@
+appUrlShortener:
+  handler: ${self:custom.path.app}/handlers/app/urlShortener.handler
+  description: URL Shortener service
+  memorySize: 256
+  timeout: 5
+  events:
+    - httpApi:
+        path: /v1/url-shortener
+        method: POST
