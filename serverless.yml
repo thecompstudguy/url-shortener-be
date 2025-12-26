@@ -1,0 +1,115 @@
+service: ${env:APP_NAME}
+frameworkVersion: '3'
+
+plugins:
+  - serverless-webpack
+  - serverless-offline
+  - serverless-plugin-log-retention
+  - serverless-dotenv-plugin
+
+package:
+  individually: true
+
+useDotenv: true
+configValidationMode: error
+
+provider:
+  name: aws
+  architecture: arm64
+  runtime: nodejs20.x
+  memorySize: 128
+  timeout: 3
+  stackName: ${self:service}-${self:provider.stage}
+  apiName: ${self:provider.stackName}
+  stage: ${opt:stage, 'local'}
+  profile: ${env:AWS_ACCOUNT_PROFILE}
+  region: ${opt:region, env:AWS_APP_REGION}
+  apiGateway:
+    shouldStartNameWithService: true
+    minimumCompressionSize: 100
+  httpApi:
+    cors: true
+    disableDefaultEndpoint: ${env:AWS_APIGW_DISABLE_DEFAULT_ENDPOINT}
+  environment:
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1'
+  tags:
+    area-or-department: ${self:custom.tags.areaOrDepartment}
+    business: ${self:custom.tags.business}
+    company: ${self:custom.tags.company}
+  stackTags:
+    SITE: ${self:service}
+    PRODUCT: ${self:service}
+    STAGE: ${self:provider.stage}
+    datadog: monitored
+    service: ${env:APP_NAME}
+    env: ${self:provider.stage}
+    area-or-department: ${self:custom.tags.areaOrDepartment}
+    business: ${self:custom.tags.business}
+    company: ${self:custom.tags.company}
+  vpc:
+    securityGroupIds:
+      - Fn::GetAtt:
+          - LambdaSecurityGroup
+          - GroupId
+    subnetIds:
+      - Ref: PrivateSubnet1
+      - Ref: PrivateSubnet2
+  iamRoleStatements:
+    # - Effect: 'Allow'
+    #   Action:
+    #     - 'dynamodb:Scan'
+    #     - 'dynamodb:Query'
+    #     - 'dynamodb:GetItem'
+    #     - 'dynamodb:PutItem'
+    #     - 'dynamodb:UpdateItem'
+    #     - 'dynamodb:DeleteItem'
+    #   Resource: 'arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.stackName}-*'
+    # - Effect: 'Allow'
+    #   Action:
+    #     - 'sqs:SendMessage'
+    #     - 'sqs:ReceiveMessage'
+    #     - 'sqs:DeleteMessage'
+    #   Resource: 'arn:aws:sqs:${self:provider.region}:*:*'
+    # - Effect: 'Allow'
+    #   Action:
+    #     - 's3:ListBucket'
+    #   Resource: 'arn:aws:s3:::${env:LESGO_AWS_S3_BUCKET}'
+    # - Effect: 'Allow'
+    #   Action:
+    #     - 's3:GetObject'
+    #     - 's3:PutObject'
+    #   Resource: 'arn:aws:s3:::${env:LESGO_AWS_S3_BUCKET}/*'
+    # - Effect: Allow
+    #   Action:
+    #     - secretsmanager:GetSecretValue
+    #   Resource: '*'
+
+custom:
+  path:
+    app: src
+    functions: config/functions
+    resources: config/resources
+  serverless-offline:
+    port: 8888
+    ignoreJWTSignature: true
+  logRetentionInDays: 7
+  contentEncoding:
+    contentCompression: 100
+  dotenv:
+    basePath: config/environments/
+  tags:
+    areaOrDepartment: ${env:APP_TAG_AREA_OR_DEPARTMENT}
+    business: ${env:APP_TAG_BUSINESS}
+    company: ${env:APP_TAG_COMPANY}
+
+#
+# Add functions here
+#
+functions:
+  - ${file(${self:custom.path.functions}/utils.yml)}
+
+#
+# Add resources here
+#
+resources:
+  - ${file(${self:custom.path.resources}/vpc.yml)}

@@ -1,0 +1,33 @@
+# package directories
+node_modules
+jspm_packages
+
+# Build Directories
+.build
+
+# Serverless directories
+.serverless
+
+# Webpack directories
+.webpack
+
+# nyc coverage report
+coverage
+.nyc_output
+
+# yarn error log
+yarn-error.log
+
+# env files
+.env*
+!config/environments/.gitkeep
+!.env.example
+config/environments/.env*
+
+# log files
+logs/*.log
+
+# IDE-specific directoris/files
+.idea/
+
+.DS_Store

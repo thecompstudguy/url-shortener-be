@@ -1,0 +1,231 @@
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: ${env:AWS_VPC_CIDR}
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: ${self:service}-vpc-${self:provider.stage}
+        - Key: area-or-department
+          Value: ${self:custom.tags.areaOrDepartment}
+        - Key: business
+          Value: ${self:custom.tags.business}
+        - Key: company
+          Value: ${self:custom.tags.company}
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: ${self:service}-igw-${self:provider.stage}
+        - Key: area-or-department
+          Value: ${self:custom.tags.areaOrDepartment}
+        - Key: business
+          Value: ${self:custom.tags.business}
+        - Key: company
+          Value: ${self:custom.tags.company}
+
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId:
+        Ref: VPC
+      InternetGatewayId:
+        Ref: InternetGateway
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPC
+      CidrBlock: ${env:AWS_PUBLIC_SUBNET_1_CIDR}
+      AvailabilityZone:
+        Fn::Select:
+          - 0
+          - Fn::GetAZs: ''
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: ${self:service}-public-subnet-1-${self:provider.stage}
+        - Key: area-or-department
+          Value: ${self:custom.tags.areaOrDepartment}
+        - Key: business
+          Value: ${self:custom.tags.business}
+        - Key: company
+          Value: ${self:custom.tags.company}
+
+  NatEip:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: ${self:service}-nat-eip-${self:provider.stage}
+        - Key: area-or-department
+          Value: ${self:custom.tags.areaOrDepartment}
+        - Key: business
+          Value: ${self:custom.tags.business}
+        - Key: company
+          Value: ${self:custom.tags.company}
+
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    DependsOn:
+      - VPCGatewayAttachment
+    Properties:
+      AllocationId:
+        Fn::GetAtt:
+          - NatEip
+          - AllocationId
+      SubnetId:
+        Ref: PublicSubnet1
+      Tags:
+        - Key: Name
+          Value: ${self:service}-nat-gateway-${self:provider.stage}
+        - Key: area-or-department
+          Value: ${self:custom.tags.areaOrDepartment}
+        - Key: business
+          Value: ${self:custom.tags.business}
+        - Key: company
+          Value: ${self:custom.tags.company}
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPC
+      CidrBlock: ${env:AWS_PRIVATE_SUBNET_1_CIDR}
+      AvailabilityZone:
+        Fn::Select:
+          - 1
+          - Fn::GetAZs: ''
+      Tags:
+        - Key: Name
+          Value: ${self:service}-private-subnet-1-${self:provider.stage}
+        - Key: area-or-department
+          Value: ${self:custom.tags.areaOrDepartment}
+        - Key: business
+          Value: ${self:custom.tags.business}
+        - Key: company
+          Value: ${self:custom.tags.company}
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPC
+      CidrBlock: ${env:AWS_PRIVATE_SUBNET_2_CIDR}
+      AvailabilityZone:
+        Fn::Select:
+          - 2
+          - Fn::GetAZs: ''
+      Tags:
+        - Key: Name
+          Value: ${self:service}-private-subnet-2-${self:provider.stage}
+        - Key: area-or-department
+          Value: ${self:custom.tags.areaOrDepartment}
+        - Key: business
+          Value: ${self:custom.tags.business}
+        - Key: company
+          Value: ${self:custom.tags.company}
+
+  LambdaSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow HTTP traffic to Lambda functions
+      VpcId:
+        Ref: VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: ${self:service}-lambda-sg-${self:provider.stage}
+        - Key: area-or-department
+          Value: ${self:custom.tags.areaOrDepartment}
+        - Key: business
+          Value: ${self:custom.tags.business}
+        - Key: company
+          Value: ${self:custom.tags.company}
+
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPC
+      Tags:
+        - Key: Name
+          Value: ${self:service}-public-rt-${self:provider.stage}
+        - Key: area-or-department
+          Value: ${self:custom.tags.areaOrDepartment}
+        - Key: business
+          Value: ${self:custom.tags.business}
+        - Key: company
+          Value: ${self:custom.tags.company}
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId:
+        Ref: RouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: InternetGateway
+
+  SubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PublicSubnet1
+      RouteTableId:
+        Ref: RouteTable
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPC
+      Tags:
+        - Key: Name
+          Value: ${self:service}-private-rt-${self:provider.stage}
+        - Key: area-or-department
+          Value: ${self:custom.tags.areaOrDepartment}
+        - Key: business
+          Value: ${self:custom.tags.business}
+        - Key: company
+          Value: ${self:custom.tags.company}
+
+  PrivateDefaultRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId:
+        Ref: PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId:
+        Ref: NatGateway
+
+  PrivateSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PrivateSubnet1
+      RouteTableId:
+        Ref: PrivateRouteTable
+
+  PrivateSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PrivateSubnet2
+      RouteTableId:
+        Ref: PrivateRouteTable
