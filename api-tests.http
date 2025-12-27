@@ -29,7 +29,7 @@ Content-Type: application/json
     client.assert(response.body.status === "success", "Response status is not success");
   });
 
-  client.test("Response data contains original url", function() {
-    client.assert(response.body.data.url === "https://www.jetbrains.com", "Response data url is incorrect");
+  client.test("Response data contains short url", function() {
+    client.assert(response.body.data.url.match(/^https:\/\/shrt\.lnk\/[a-zA-Z0-9]{5}$/), "Response data url is not a valid short url");
   });
 %}
