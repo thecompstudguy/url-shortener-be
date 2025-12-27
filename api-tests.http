@@ -13,11 +13,19 @@ Accept: application/json
 %}
 
 ### URL Shortener
+GET https://fakerapi.it/api/v1/custom?_quantity=1&url=url
+Accept: application/json
+
+> {%
+  client.global.set("random_url", response.body.data[0].url);
+%}
+
+###
 POST {{host}}/v1/url-shortener
 Content-Type: application/json
 
 {
-  "url": "https://www.jetbrains.com"
+  "url": "{{random_url}}"
 }
 
 > {%
