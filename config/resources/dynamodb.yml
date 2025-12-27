@@ -1,0 +1,50 @@
+Resources:
+  UrlShortenerTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: ${self:provider.stackName}-urls
+      AttributeDefinitions:
+        - AttributeName: shortcode
+          AttributeType: S
+        - AttributeName: originalUrl
+          AttributeType: S
+      KeySchema:
+        - AttributeName: shortcode
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: originalUrlIndex
+          KeySchema:
+            - AttributeName: originalUrl
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      BillingMode: PAY_PER_REQUEST
+      Tags:
+        - Key: Name
+          Value: ${self:provider.stackName}-urlShortener
+        - Key: area-or-department
+          Value: ${self:custom.tags.areaOrDepartment}
+        - Key: business
+          Value: ${self:custom.tags.business}
+        - Key: company
+          Value: ${self:custom.tags.company}
+
+  DynamoDBVPCEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName:
+        Fn::Sub: com.amazonaws.${AWS::Region}.dynamodb
+      VpcId:
+        Ref: VPC
+      RouteTableIds:
+        - Ref: PrivateRouteTable
+      VpcEndpointType: Gateway
+      Tags:
+        - Key: Name
+          Value: ${self:service}-dynamodb-vpc-endpoint-${self:provider.stage}
+        - Key: area-or-department
+          Value: ${self:custom.tags.areaOrDepartment}
+        - Key: business
+          Value: ${self:custom.tags.business}
+        - Key: company
+          Value: ${self:custom.tags.company}

@@ -55,15 +55,15 @@ provider:
       - Ref: PrivateSubnet1
       - Ref: PrivateSubnet2
   iamRoleStatements:
-    # - Effect: 'Allow'
-    #   Action:
-    #     - 'dynamodb:Scan'
-    #     - 'dynamodb:Query'
-    #     - 'dynamodb:GetItem'
-    #     - 'dynamodb:PutItem'
-    #     - 'dynamodb:UpdateItem'
-    #     - 'dynamodb:DeleteItem'
-    #   Resource: 'arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.stackName}-*'
+     - Effect: 'Allow'
+       Action:
+         - 'dynamodb:Scan'
+         - 'dynamodb:Query'
+         - 'dynamodb:GetItem'
+         - 'dynamodb:PutItem'
+         - 'dynamodb:UpdateItem'
+         - 'dynamodb:DeleteItem'
+       Resource: 'arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.stackName}-*'
     # - Effect: 'Allow'
     #   Action:
     #     - 'sqs:SendMessage'
@@ -107,9 +107,11 @@ custom:
 #
 functions:
   - ${file(${self:custom.path.functions}/utils.yml)}
+  - ${file(${self:custom.path.functions}/app.yml)}
 
 #
 # Add resources here
 #
 resources:
   - ${file(${self:custom.path.resources}/vpc.yml)}
+  - ${file(${self:custom.path.resources}/dynamodb.yml)}
