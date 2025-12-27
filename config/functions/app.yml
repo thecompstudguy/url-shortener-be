@@ -3,6 +3,7 @@ appUrlShortener:
   description: URL Shortener service
   memorySize: 256
   timeout: 5
+  reservedConcurrency: 12
   events:
     - httpApi:
         path: /v1/url-shortener
@@ -13,6 +14,7 @@ appUrlRedirect:
   description: URL Redirect service
   memorySize: 256
   timeout: 5
+  reservedConcurrency: 12
   events:
     - httpApi:
         path: /{shortcode}
