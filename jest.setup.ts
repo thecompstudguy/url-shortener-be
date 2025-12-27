@@ -30,4 +30,14 @@ process.env = {
   LESGO_AWS_S3_REGION: 'us-east-1',
   LESGO_AWS_S3_BUCKET: 'lesgo-testing',
   LESGO_AWS_S3_BUCKET_URI: 'https://assets.testing.lesgo.com',
+
+  LESGO_AWS_DYNAMODB_TABLE_ALIASES: 'url-shortener-table-alias',
 };
+
+jest.mock('lesgo/utils/dynamodb', () => ({
+  query: jest.fn(),
+  putRecord: jest.fn(),
+  updateRecord: jest.fn(),
+  deleteRecord: jest.fn(),
+  scan: jest.fn(),
+}));

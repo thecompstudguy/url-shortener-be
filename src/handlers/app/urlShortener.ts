@@ -1,4 +1,4 @@
-import { APIGatewayProxyEvent } from 'aws-lambda';
+import { APIGatewayProxyEventV2 } from 'aws-lambda';
 import middy from '@middy/core';
 import { httpMiddleware } from 'lesgo/middlewares';
 import { logger } from 'lesgo/utils';
@@ -7,7 +7,7 @@ import appConfig from '../../config/app';
 
 const FILE = 'handlers.app.urlShortener';
 
-type MiddyAPIGatewayProxyEvent = APIGatewayProxyEvent & {
+type MiddyAPIGatewayProxyEvent = Omit<APIGatewayProxyEventV2, 'body'> & {
   body: {
     url: string;
   };
@@ -16,7 +16,13 @@ type MiddyAPIGatewayProxyEvent = APIGatewayProxyEvent & {
 const urlShortenerHandler = (event: MiddyAPIGatewayProxyEvent) => {
   logger.debug(`${FILE}::RECEIVED_REQUEST`, event);
 
-  return urlShortener(event.body);
+  const { body, requestContext } = event;
+  const creatorIpAddress = requestContext.http.sourceIp;
+
+  return urlShortener({
+    ...body,
+    creatorIpAddress,
+  });
 };
 
 export const handler = middy()
