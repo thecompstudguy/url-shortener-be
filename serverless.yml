@@ -103,8 +103,8 @@ custom:
     business: ${env:APP_TAG_BUSINESS}
     company: ${env:APP_TAG_COMPANY}
   apiGatewayThrottling:
-    maxRequestsPerSecond: 20
-    maxConcurrentRequests: 40
+    maxRequestsPerSecond: 5
+    maxConcurrentRequests: 10
 
 #
 # Add functions here
