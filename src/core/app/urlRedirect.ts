@@ -2,6 +2,8 @@ import { validateFields } from 'lesgo/utils';
 import getUrlDataByShortcode from '../../models/getUrlDataByShortcode';
 import UrlShortenerException from '../../exceptions/UrlShortenerException';
 
+const FILE = 'core.app.urlRedirect';
+
 type Input = {
   shortcode: string;
 };
@@ -20,7 +22,7 @@ export default async (params: Input): Promise<string> => {
   if (!urlData) {
     throw new UrlShortenerException(
       'URL not found',
-      'core.app.urlRedirect::URL_NOT_FOUND',
+      `${FILE}::URL_NOT_FOUND`,
       404
     );
   }
