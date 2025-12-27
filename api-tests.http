@@ -1,0 +1,35 @@
+### Ping Utility
+GET {{host}}/v1/utils/ping
+Accept: application/json
+
+> {%
+  client.test("Request executed successfully", function() {
+    client.assert(response.status === 200, "Response status is not 200");
+  });
+
+  client.test("Response body contains Pong", function() {
+    client.assert(response.body.data.message === "Pong", "Response message is not Pong");
+  });
+%}
+
+### URL Shortener
+POST {{host}}/v1/url-shortener
+Content-Type: application/json
+
+{
+  "url": "https://www.jetbrains.com"
+}
+
+> {%
+  client.test("Request executed successfully", function() {
+    client.assert(response.status === 200, "Response status is not 200");
+  });
+
+  client.test("Response status is success", function() {
+    client.assert(response.body.status === "success", "Response status is not success");
+  });
+
+  client.test("Response data contains original url", function() {
+    client.assert(response.body.data.url === "https://www.jetbrains.com", "Response data url is incorrect");
+  });
+%}
