@@ -6,6 +6,7 @@ plugins:
   - serverless-offline
   - serverless-plugin-log-retention
   - serverless-dotenv-plugin
+  - serverless-api-gateway-throttling
 
 package:
   individually: true
@@ -30,9 +31,6 @@ provider:
   httpApi:
     cors: true
     disableDefaultEndpoint: ${env:AWS_APIGW_DISABLE_DEFAULT_ENDPOINT}
-    throttling:
-      burstLimit: 40
-      rateLimit: 20
   environment:
     AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1'
   tags:
@@ -104,6 +102,9 @@ custom:
     areaOrDepartment: ${env:APP_TAG_AREA_OR_DEPARTMENT}
     business: ${env:APP_TAG_BUSINESS}
     company: ${env:APP_TAG_COMPANY}
+  apiGatewayThrottling:
+    maxRequestsPerSecond: 20
+    maxConcurrentRequests: 40
 
 #
 # Add functions here
