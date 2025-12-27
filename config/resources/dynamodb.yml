@@ -2,7 +2,7 @@ Resources:
   UrlShortenerTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: ${self:provider.stackName}-urlShortener
+      TableName: ${self:provider.stackName}-urls
       AttributeDefinitions:
         - AttributeName: shortcode
           AttributeType: S
