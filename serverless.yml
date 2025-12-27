@@ -6,6 +6,7 @@ plugins:
   - serverless-offline
   - serverless-plugin-log-retention
   - serverless-dotenv-plugin
+  - serverless-api-gateway-throttling
 
 package:
   individually: true
@@ -101,6 +102,9 @@ custom:
     areaOrDepartment: ${env:APP_TAG_AREA_OR_DEPARTMENT}
     business: ${env:APP_TAG_BUSINESS}
     company: ${env:APP_TAG_COMPANY}
+  apiGatewayThrottling:
+    maxRequestsPerSecond: 5
+    maxConcurrentRequests: 10
 
 #
 # Add functions here
