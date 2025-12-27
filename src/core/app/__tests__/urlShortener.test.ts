@@ -1,8 +1,10 @@
 import urlShortener from '../urlShortener';
 import appConfig from '../../../config/app';
+import getUrlDataByOriginalUrl from '../../../models/getUrlDataByOriginalUrl';
 import getUrlDataByShortcode from '../../../models/getUrlDataByShortcode';
 import storeUrlData from '../../../models/storeUrlData';
 
+jest.mock('../../../models/getUrlDataByOriginalUrl');
 jest.mock('../../../models/getUrlDataByShortcode');
 jest.mock('../../../models/storeUrlData');
 
@@ -16,14 +18,20 @@ describe('core.app.urlShortener', () => {
       url: 'https://example.com',
       creatorIpAddress: '127.0.0.1',
     };
+    (getUrlDataByOriginalUrl as jest.Mock).mockResolvedValue(null);
     (getUrlDataByShortcode as jest.Mock).mockResolvedValue(null);
     (storeUrlData as jest.Mock).mockResolvedValue({});
 
     const result = await urlShortener(input);
 
-    expect(result.url).toMatch(
-      new RegExp(`^${appConfig.shortUrlDomain}/[a-zA-Z0-9]{5}$`)
-    );
+    expect(result).toEqual({
+      shortcode: expect.any(String),
+      originalUrl: input.url,
+      url: expect.stringMatching(
+        new RegExp(`^${appConfig.shortUrlDomain}/[a-zA-Z0-9]{5}$`)
+      ),
+    });
+    expect(getUrlDataByOriginalUrl).toHaveBeenCalledWith(input.url);
     expect(getUrlDataByShortcode).toHaveBeenCalled();
     expect(storeUrlData).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -33,24 +41,49 @@ describe('core.app.urlShortener', () => {
     );
   });
 
-  it('should return existing url data if shortcode collision occurs', async () => {
+  it('should regenerate shortcode if collision occurs', async () => {
+    const input = {
+      url: 'https://example.com',
+      creatorIpAddress: '127.0.0.1',
+    };
+    (getUrlDataByOriginalUrl as jest.Mock).mockResolvedValue(null);
+    (getUrlDataByShortcode as jest.Mock)
+      .mockResolvedValueOnce({ shortcode: 'collis' })
+      .mockResolvedValueOnce(null);
+    (storeUrlData as jest.Mock).mockResolvedValue({});
+
+    const result = await urlShortener(input);
+
+    expect(result).toEqual({
+      shortcode: expect.any(String),
+      originalUrl: input.url,
+      url: expect.stringMatching(
+        new RegExp(`^${appConfig.shortUrlDomain}/[a-zA-Z0-9]{5}$`)
+      ),
+    });
+    expect(getUrlDataByShortcode).toHaveBeenCalledTimes(2);
+    expect(storeUrlData).toHaveBeenCalled();
+  });
+
+  it('should return existing url data if original url already shortened', async () => {
     const input = {
       url: 'https://example.com',
       creatorIpAddress: '127.0.0.1',
     };
     const existingData = {
       shortcode: 'abcde',
-      originalUrl: 'https://already-exists.com',
+      originalUrl: 'https://example.com',
       creatorIpAddress: '192.168.1.1',
     };
-    (getUrlDataByShortcode as jest.Mock).mockResolvedValue(existingData);
+    (getUrlDataByOriginalUrl as jest.Mock).mockResolvedValue(existingData);
 
     const result = await urlShortener(input);
 
-    expect(result.url).toBe(
-      `${appConfig.shortUrlDomain}/${existingData.shortcode}`
-    );
-    expect(result.originalUrl).toBe(existingData.originalUrl);
+    expect(result).toEqual({
+      shortcode: existingData.shortcode,
+      originalUrl: existingData.originalUrl,
+      url: `${appConfig.shortUrlDomain}/${existingData.shortcode}`,
+    });
     expect(storeUrlData).not.toHaveBeenCalled();
   });
 

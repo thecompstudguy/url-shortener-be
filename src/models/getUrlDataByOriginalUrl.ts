@@ -5,22 +5,29 @@ import UrlDataDbRow from '../types/UrlDataDbRow';
 import UrlShortenerException from '../exceptions/UrlShortenerException';
 import rethrowAsException from '../utils/errors/rethrowAsException';
 
-const FILE = 'models.getUrlDataByShortcode';
+const FILE = 'models.getUrlDataByOriginalUrl';
 
-const getUrlDataByShortcode = async (
-  shortcode: string
+const getUrlDataByOriginalUrl = async (
+  originalUrl: string
 ): Promise<UrlDataDbRow | null> => {
   try {
     const tableAlias = dynamodbConfig.tables.default.alias as string;
 
     logger.debug(`${FILE}::FETCHING_URL_DATA`, {
-      shortcode,
+      originalUrl,
       tableAlias,
     });
 
-    const resp = await query(tableAlias, 'shortcode = :shortcode', {
-      ':shortcode': shortcode,
-    });
+    const resp = await query(
+      tableAlias,
+      'originalUrl = :originalUrl',
+      {
+        ':originalUrl': originalUrl,
+      },
+      {
+        IndexName: 'originalUrlIndex',
+      }
+    );
 
     logger.debug(`${FILE}::URL_DATA_FETCHED`, {
       count: resp.length,
@@ -31,11 +38,11 @@ const getUrlDataByShortcode = async (
     return resp[0] as UrlDataDbRow;
   } catch (error) {
     return rethrowAsException(error, UrlShortenerException, {
-      message: 'Failed to fetch url data by shortcode',
+      message: 'Failed to fetch url data',
       errorCode: `${FILE}::FETCH_ERROR`,
-      context: { shortcode },
+      context: { originalUrl },
     });
   }
 };
 
-export default getUrlDataByShortcode;
+export default getUrlDataByOriginalUrl;

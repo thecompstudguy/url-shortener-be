@@ -1,7 +1,9 @@
 import { validateFields } from 'lesgo/utils';
 import appConfig from '../../config/app';
+import getUrlDataByOriginalUrl from '../../models/getUrlDataByOriginalUrl';
 import getUrlDataByShortcode from '../../models/getUrlDataByShortcode';
 import storeUrlData from '../../models/storeUrlData';
+import UrlShortenerResponse from '../../types/UrlShortenerResponse';
 
 type Input = {
   url: string;
@@ -17,6 +19,7 @@ const validateInput = (input: Input) => {
   ];
 
   const validated = validateFields(input, validFields);
+
   return validated as Input;
 };
 
@@ -27,20 +30,35 @@ const generateShortcode = (length = 5) => {
   for (let i = 0; i < length; i++) {
     result += characters.charAt(Math.floor(Math.random() * characters.length));
   }
+  
   return result;
 };
 
-export default async (body: Input) => {
+export default async (body: Input): Promise<UrlShortenerResponse> => {
   const validated = validateInput({ ...body });
 
-  const shortcode = generateShortcode(5);
+  const existingUrlData = await getUrlDataByOriginalUrl(validated.url);
 
-  const existingUrlData = await getUrlDataByShortcode(shortcode);
   if (existingUrlData) {
     return {
-      ...existingUrlData,
+      shortcode: existingUrlData.shortcode,
+      originalUrl: existingUrlData.originalUrl,
       url: `${appConfig.shortUrlDomain}/${existingUrlData.shortcode}`,
     };
+  }
+
+  let shortcode = '';
+  let isUnique = false;
+
+  while (!isUnique) {
+    shortcode = generateShortcode(5);
+
+    // eslint-disable-next-line no-await-in-loop
+    const existingShortcode = await getUrlDataByShortcode(shortcode);
+
+    if (!existingShortcode) {
+      isUnique = true;
+    }
   }
 
   const urlData = {
@@ -50,10 +68,12 @@ export default async (body: Input) => {
     creatorUserId: validated.creatorUserId,
   };
 
+  // TODO: To dispatch to sqs
   await storeUrlData(urlData);
 
   return {
-    ...urlData,
+    shortcode,
+    originalUrl: validated.url,
     url: `${appConfig.shortUrlDomain}/${shortcode}`,
   };
 };
