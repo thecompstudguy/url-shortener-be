@@ -96,4 +96,12 @@ describe('core.app.urlShortener', () => {
     const input = { url: 'https://example.com' } as any;
     await expect(urlShortener(input)).rejects.toThrow();
   });
+
+  it('should throw error when invalid url is provided', async () => {
+    const input = {
+      url: 'invalid-url',
+      creatorIpAddress: '127.0.0.1',
+    };
+    await expect(urlShortener(input)).rejects.toThrow('Invalid URL provided');
+  });
 });

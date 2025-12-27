@@ -4,6 +4,7 @@ import getUrlDataByOriginalUrl from '../../models/getUrlDataByOriginalUrl';
 import getUrlDataByShortcode from '../../models/getUrlDataByShortcode';
 import storeUrlData from '../../models/storeUrlData';
 import UrlShortenerResponse from '../../types/UrlShortenerResponse';
+import UrlShortenerException from '../../exceptions/UrlShortenerException';
 
 type Input = {
   url: string;
@@ -18,9 +19,20 @@ const validateInput = (input: Input) => {
     { key: 'creatorUserId', type: 'string', required: false },
   ];
 
-  const validated = validateFields(input, validFields);
+  const validated = validateFields(input, validFields) as Input;
 
-  return validated as Input;
+  try {
+    // eslint-disable-next-line no-new
+    new URL(validated.url);
+  } catch (err) {
+    throw new UrlShortenerException(
+      'Invalid URL provided',
+      'core.app.urlShortener::INVALID_URL',
+      400
+    );
+  }
+
+  return validated;
 };
 
 const generateShortcode = (length = 5) => {
