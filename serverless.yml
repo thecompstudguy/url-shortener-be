@@ -114,3 +114,4 @@ functions:
 #
 resources:
   - ${file(${self:custom.path.resources}/vpc.yml)}
+  - ${file(${self:custom.path.resources}/dynamodb.yml)}
