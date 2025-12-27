@@ -30,6 +30,9 @@ provider:
   httpApi:
     cors: true
     disableDefaultEndpoint: ${env:AWS_APIGW_DISABLE_DEFAULT_ENDPOINT}
+    throttling:
+      burstLimit: 40
+      rateLimit: 20
   environment:
     AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1'
   tags:
