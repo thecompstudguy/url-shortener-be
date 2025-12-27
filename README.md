@@ -1,12 +1,28 @@
 # URL Shortener Backend (`url-shortener-be`)
 
-Backend services for the URL Shortener system, built as a Serverless (AWS Lambda) Node.js/TypeScript project using the Lesgo framework.
+Backend for a simple URL Shortener system — built with **AWS Lambda**, **Node.js**, **TypeScript**, and the **Lesgo** framework.  
+Serverless, scalable, and yes… protected from people who think spamming the API is a personality trait.
+
+---
+
+## What is this?
+
+This is the backend API that:
+- Shortens long URLs into clean shortcodes
+- Redirects users to the original link
+- Runs fully serverless on AWS (no servers to babysit 👶)
+
+---
 
 ## Prerequisites
 
-- Node.js version from `.nvmrc` (recommended via `nvm`)
-- `npm` (ships with Node)
-- AWS credentials for deployment (profile-based, see `AWS_ACCOUNT_PROFILE`)
+Before running this, make sure you have:
+
+- **Node.js** (version specified in `.nvmrc`, `nvm` highly recommended)
+- **npm** (comes with Node)
+- **AWS credentials** (profile-based, see `AWS_ACCOUNT_PROFILE`)
+
+---
 
 ## Install
 
@@ -16,47 +32,69 @@ nvm use
 npm ci
 ```
 
+---
+
 ## Environment Configuration
 
-This project loads stage-based environment variables from `config/environments/` (see `serverless.yml`). All `.env*` files are ignored by Git (except `.env.example`).
+This project uses **stage-based environment variables**, because hardcoding secrets is a crime 🫡
+
+Configs are loaded from:
+```
+config/environments/
+```
+
+All `.env*` files are ignored by Git (except `.env.example`).
+
+---
 
 ### Creating Environment Files
 
-To set up your environment, use `.env.example` as a template.
+Use `.env.example` as your base template.
 
-#### Root Directory
-For local development and general configuration, create a `.env` file in the root directory:
+#### Root Directory (Local Dev)
+
 ```bash
 cp .env.example .env
 ```
 
-#### config/environments Directory
-For stage-specific configurations used during deployment, create the matching stage file under `config/environments/`:
+#### Stage-Based Configs (for Deployments)
+
 ```bash
 cp .env.example config/environments/.env.[stage]
 ```
 
-### Available Stages
-The following stages are supported:
-- `dev`: Development environment.
-- `sandbox`: Sandbox/Testing environment.
-- `prod`: Production environment.
+---
 
-Example files to create:
+### Supported Stages
+
+- `dev` – development (where bugs are born)
+- `sandbox` – testing / experiments
+- `prod` – production (touch with fear)
+
+Example files:
 - `config/environments/.env.dev`
 - `config/environments/.env.sandbox`
 - `config/environments/.env.prod`
-- `config/environments/.env` (used for local development)
+- `config/environments/.env` (local dev)
 
-At minimum, set `APP_NAME`, `AWS_APP_REGION`, and `AWS_ACCOUNT_PROFILE` for your target stage. Some stacks may also require VPC settings (`AWS_VPC_*`) depending on enabled resources.
+At minimum, set:
+- `APP_NAME`
+- `AWS_APP_REGION`
+- `AWS_ACCOUNT_PROFILE`
+
+Some stages may also need VPC configs (`AWS_VPC_*`) depending on enabled resources.
+
+---
 
 ## Run Locally
 
-Starts the Serverless Offline HTTP API on port `8888`:
+Starts the Serverless Offline API on **port 8888**:
 
 ```bash
 npm run start
 ```
+
+---
 
 ## Build
 
@@ -64,15 +102,19 @@ npm run start
 npm run build
 ```
 
+---
+
 ## Deploy (AWS)
 
-1. Ensure your AWS credentials/profile exists locally (example: `aws configure --profile <profileName>`).
-2. Update the stage environment file under `config/environments/`.
+1. Make sure your AWS profile exists:
+   ```bash
+   aws configure --profile <profileName>
+   ```
+2. Update the correct stage `.env` file.
 3. Deploy:
-
-```bash
-npm run deploy -- --stage dev
-```
+   ```bash
+   npm run deploy -- --stage dev
+   ```
 
 Other useful commands:
 
@@ -81,17 +123,80 @@ npm run logs -- --stage dev
 npm run destroy -- --stage dev
 ```
 
-## VPC CIDR and Subnet Management
+---
 
-When configuring your environment, be mindful of the CIDR and subnet values assigned to each stage. 
+## API Guide
 
-**Important Considerations:**
-- **Avoid Overlapping Ranges**: Ensure that VPC CIDR blocks do not overlap across different stages (dev, sandbox, prod) or with other existing networks in your AWS organization. Overlapping ranges will prevent VPC peering and other networking features from working correctly.
-- **Unique Subnets**: Each subnet within a VPC must have a unique CIDR block that is a subset of the VPC's CIDR range.
-- **Future Growth**: Choose CIDR block sizes that allow for sufficient IP addresses as your infrastructure scales.
+### URL Shortener
 
-You should document your assigned ranges locally or in your organization's network architecture documentation to maintain a clear overview of your network landscape.
+Creates a short link from a long URL.
+
+- **Endpoint:** `/v1/url-shortener`
+- **Method:** `POST`
+- **Content-Type:** `application/json`
+
+**Request Body:**
+```json
+{
+  "url": "https://example.com"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "status": "success",
+  "data": {
+    "shortcode": "aB123",
+    "originalUrl": "https://example.com",
+    "url": "https://shrt.lnk/aB123"
+  }
+}
+```
 
 ---
+
+### URL Redirect
+
+Redirects to the original URL using the shortcode.
+
+- **Endpoint:** `/{shortcode}`
+- **Method:** `GET`
+- **Response:** `301 Moved Permanently`  
+  (with `Location` header pointing to the original URL)
+
+---
+
+## Throttling (aka “Please Don’t Abuse the API”)
+
+Yes, this API has **rate limiting**.
+
+Why?
+- To prevent spam
+- To avoid accidental infinite loops
+- To stop that *one guy* who tries to stress-test prod “just for fun”
+- **To avoid waking up to a surprise AWS bill that could’ve paid for coffee all semester** ☕💸
+
+Serverless is cheap… until it’s not.  
+Throttling exists to keep usage fair, the system stable, and the cloud bill **not terrifying**.
+
+So if you hit a throttle limit, it’s not broken —  
+it’s just telling you to **slow down, save money, and touch grass** 🌱
+
+---
+
+## VPC CIDR & Subnet Notes (Read This Once, Save a Headache)
+
+If you’re enabling VPC resources, be smart with CIDR ranges.
+
+**Things to remember:**
+- Don’t overlap CIDRs across stages (`dev`, `sandbox`, `prod`)
+- Every subnet must be unique
+- Leave room for future growth (you’ll regret `/28` later)
+
+Document your ranges somewhere. Future you will thank present you.
+
+---
+
 **Author:** TheCompSTUDGuy  
 **Email:** the.compstud.guy@universitea.shop
