@@ -56,8 +56,12 @@ const isPrivateIp = (ipAddress: string) => {
     const normalized = ipAddress.toLowerCase();
     if (normalized === '::1' || normalized === '::') return true;
     if (normalized.startsWith('fc') || normalized.startsWith('fd')) return true;
-    if (normalized.startsWith('fe8') || normalized.startsWith('fe9')) return true;
-    if (normalized.startsWith('fea') || normalized.startsWith('feb')) return true;
+    if (normalized.startsWith('fe8') || normalized.startsWith('fe9')) {
+      return true;
+    }
+    if (normalized.startsWith('fea') || normalized.startsWith('feb')) {
+      return true;
+    }
     if (normalized.startsWith('ff')) return true;
   }
 
