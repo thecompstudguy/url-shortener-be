@@ -1,0 +1,42 @@
+Resources:
+  ApiGatewayWebAcl:
+    Type: AWS::WAFv2::WebACL
+    Properties:
+      Name: ${self:service}-waf-${self:provider.stage}
+      Scope: REGIONAL
+      DefaultAction:
+        Allow: {}
+      VisibilityConfig:
+        CloudWatchMetricsEnabled: true
+        MetricName: ${self:service}-waf-${self:provider.stage}
+        SampledRequestsEnabled: true
+      Rules:
+        - Name: AWSManagedRulesCommonRuleSet
+          Priority: 1
+          OverrideAction:
+            None: {}
+          Statement:
+            ManagedRuleGroupStatement:
+              Name: AWSManagedRulesCommonRuleSet
+              VendorName: AWS
+          VisibilityConfig:
+            CloudWatchMetricsEnabled: true
+            MetricName: ${self:service}-waf-common-${self:provider.stage}
+            SampledRequestsEnabled: true
+      Tags:
+        - Key: area-or-department
+          Value: ${self:custom.tags.areaOrDepartment}
+        - Key: business
+          Value: ${self:custom.tags.business}
+        - Key: company
+          Value: ${self:custom.tags.company}
+
+  ApiGatewayWebAclAssociation:
+    Type: AWS::WAFv2::WebACLAssociation
+    Properties:
+      ResourceArn:
+        Fn::Sub: arn:aws:apigateway:${AWS::Region}::/apis/${HttpApi}/stages/${self:provider.stage}
+      WebACLArn:
+        Fn::GetAtt:
+          - ApiGatewayWebAcl
+          - Arn
