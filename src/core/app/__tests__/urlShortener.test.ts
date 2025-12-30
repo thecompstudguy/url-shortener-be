@@ -104,4 +104,90 @@ describe('core.app.urlShortener', () => {
     };
     await expect(urlShortener(input)).rejects.toThrow('Invalid URL provided');
   });
+
+  it('should bypass urlExists check for domains in bypass list', async () => {
+    const input = {
+      url: 'https://reddit.com/r/AteneodeCagayan',
+      creatorIpAddress: '127.0.0.1',
+    };
+    (getUrlDataByOriginalUrl as jest.Mock).mockResolvedValue(null);
+    (getUrlDataByShortcode as jest.Mock).mockResolvedValue(null);
+    (storeUrlData as jest.Mock).mockResolvedValue({});
+
+    // Mock fetch and ensure it's NOT called
+    const spyFetch = jest.spyOn(global, 'fetch');
+
+    const result = await urlShortener(input);
+
+    expect(result).toBeDefined();
+    expect(spyFetch).not.toHaveBeenCalled();
+
+    spyFetch.mockRestore();
+  });
+
+  it('should bypass urlExists check for subdomains of domains in bypass list', async () => {
+    const input = {
+      url: 'https://www.reddit.com/r/AteneodeCagayan',
+      creatorIpAddress: '127.0.0.1',
+    };
+    (getUrlDataByOriginalUrl as jest.Mock).mockResolvedValue(null);
+    (getUrlDataByShortcode as jest.Mock).mockResolvedValue(null);
+    (storeUrlData as jest.Mock).mockResolvedValue({});
+
+    // Mock fetch and ensure it's NOT called
+    const spyFetch = jest.spyOn(global, 'fetch');
+
+    const result = await urlShortener(input);
+
+    expect(result).toBeDefined();
+    expect(spyFetch).not.toHaveBeenCalled();
+
+    spyFetch.mockRestore();
+  });
+
+  it('should NOT bypass urlExists check for domains that only partially match', async () => {
+    const input = {
+      url: 'https://notreddit.com/something',
+      creatorIpAddress: '127.0.0.1',
+    };
+    (getUrlDataByOriginalUrl as jest.Mock).mockResolvedValue(null);
+    (getUrlDataByShortcode as jest.Mock).mockResolvedValue(null);
+    (storeUrlData as jest.Mock).mockResolvedValue({});
+
+    // Mock fetch to return OK
+    const spyFetch = jest.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
+      status: 200,
+    } as Response);
+
+    const result = await urlShortener(input);
+
+    expect(result).toBeDefined();
+    expect(spyFetch).toHaveBeenCalled();
+
+    spyFetch.mockRestore();
+  });
+
+  it('should still call urlExists check for domains NOT in bypass list', async () => {
+    const input = {
+      url: 'https://example.com',
+      creatorIpAddress: '127.0.0.1',
+    };
+    (getUrlDataByOriginalUrl as jest.Mock).mockResolvedValue(null);
+    (getUrlDataByShortcode as jest.Mock).mockResolvedValue(null);
+    (storeUrlData as jest.Mock).mockResolvedValue({});
+
+    // Mock fetch to return OK
+    const spyFetch = jest.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
+      status: 200,
+    } as Response);
+
+    const result = await urlShortener(input);
+
+    expect(result).toBeDefined();
+    expect(spyFetch).toHaveBeenCalled();
+
+    spyFetch.mockRestore();
+  });
 });

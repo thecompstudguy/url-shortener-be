@@ -128,9 +128,11 @@ const isUnsafeHostname = (hostname: string) => {
 /**
  * Validates the input for the URL shortener.
  *
+ * Checks if the URL exists and is accessible, unless the domain is in the bypass list.
+ *
  * @param input - The input object containing url, creatorIpAddress, and optional creatorUserId.
  * @returns A promise that resolves to the validated input.
- * @throws {UrlShortenerException} If the input is invalid.
+ * @throws {UrlShortenerException} If the input is invalid or URL does not exist.
  */
 const validateInput = async (input: Input) => {
   const validFields = [
@@ -184,13 +186,20 @@ const validateInput = async (input: Input) => {
     );
   }
 
-  const exists = await urlExists(parsedUrl.toString());
-  if (!exists) {
-    throw new UrlShortenerException(
-      'URL does not exist',
-      `${FILE}::URL_NOT_FOUND`,
-      400
-    );
+  const shouldBypassExistsCheck = appConfig.bypassUrlExistsDomains.some(
+    domain =>
+      parsedUrl.hostname === domain || parsedUrl.hostname.endsWith(`.${domain}`)
+  );
+
+  if (!shouldBypassExistsCheck) {
+    const exists = await urlExists(parsedUrl.toString());
+    if (!exists) {
+      throw new UrlShortenerException(
+        'URL does not exist',
+        `${FILE}::URL_NOT_FOUND`,
+        400
+      );
+    }
   }
 
   return validated;
