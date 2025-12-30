@@ -32,6 +32,7 @@ process.env = {
   LESGO_AWS_S3_BUCKET_URI: 'https://assets.testing.lesgo.com',
 
   LESGO_AWS_DYNAMODB_TABLE_ALIASES: 'url-shortener-table-alias',
+  BYPASS_URL_EXISTS_DOMAINS: 'reddit.com',
 };
 
 jest.mock('lesgo/utils/dynamodb', () => ({
