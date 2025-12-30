@@ -15,16 +15,44 @@ type Input = {
   creatorUserId?: string;
 };
 
+/**
+ * Checks if a URL exists and is accessible.
+ *
+ * Uses custom browser-like headers (User-Agent, Accept, Accept-Language) to bypass
+ * anti-bot measures that some domains (e.g., Reddit) employ to block non-browser requests.
+ *
+ * @param url - The URL to check.
+ * @returns A promise that resolves to true if the URL is accessible, false otherwise.
+ */
 const urlExists = async (url: string) => {
+  // Use browser-like headers to avoid being blocked by anti-bot measures (e.g., Reddit)
+  const headers = {
+    'User-Agent':
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+    Accept:
+      'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.9',
+  };
+
   try {
-    const response = await fetch(url, { method: 'HEAD', redirect: 'manual' });
+    const response = await fetch(url, {
+      method: 'HEAD',
+      headers,
+      redirect: 'manual',
+    });
+
     if (response.ok || (response.status >= 300 && response.status < 400)) {
       return true;
     }
 
-    if (response.status === 405 || response.status === 501) {
+    if (
+      response.status === 403 ||
+      response.status === 405 ||
+      response.status === 501
+    ) {
       const fallbackResponse = await fetch(url, {
         method: 'GET',
+        headers,
         redirect: 'manual',
       });
       return (
@@ -39,6 +67,12 @@ const urlExists = async (url: string) => {
   return false;
 };
 
+/**
+ * Checks if an IP address is a private or reserved address.
+ *
+ * @param ipAddress - The IP address to check.
+ * @returns True if the IP address is private, false otherwise.
+ */
 const isPrivateIp = (ipAddress: string) => {
   if (isIP(ipAddress) === 4) {
     const [first, second] = ipAddress.split('.').map(Number);
@@ -68,6 +102,12 @@ const isPrivateIp = (ipAddress: string) => {
   return false;
 };
 
+/**
+ * Checks if a hostname is considered unsafe (e.g., localhost or private IP).
+ *
+ * @param hostname - The hostname to check.
+ * @returns True if the hostname is unsafe, false otherwise.
+ */
 const isUnsafeHostname = (hostname: string) => {
   const normalized = hostname.toLowerCase();
   if (normalized === 'localhost' || normalized.endsWith('.localhost')) {
@@ -85,6 +125,13 @@ const isUnsafeHostname = (hostname: string) => {
   return false;
 };
 
+/**
+ * Validates the input for the URL shortener.
+ *
+ * @param input - The input object containing url, creatorIpAddress, and optional creatorUserId.
+ * @returns A promise that resolves to the validated input.
+ * @throws {UrlShortenerException} If the input is invalid.
+ */
 const validateInput = async (input: Input) => {
   const validFields = [
     { key: 'url', type: 'string', required: true },
@@ -149,6 +196,12 @@ const validateInput = async (input: Input) => {
   return validated;
 };
 
+/**
+ * Generates a random shortcode of a specified length.
+ *
+ * @param length - The length of the shortcode to generate. Defaults to 5.
+ * @returns A random alphanumeric string.
+ */
 const generateShortcode = (length = 5) => {
   const characters =
     'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -160,6 +213,12 @@ const generateShortcode = (length = 5) => {
   return result;
 };
 
+/**
+ * Main function to shorten a URL.
+ *
+ * @param body - The request body containing the URL and creator information.
+ * @returns A promise that resolves to the URL shortener response.
+ */
 export default async (body: Input): Promise<UrlShortenerResponse> => {
   const validated = await validateInput({ ...body });
 
